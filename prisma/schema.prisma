@@ -1,0 +1,193 @@
+// Subconjunto do schema do Agent-Api (mesmo Postgres, schema `public`). Migrations
+// só existem em Agent-Api/prisma/migrations. Qualquer mudança de coluna precisa ser
+// espelhada manualmente aqui. Rodar apenas `prisma generate`, nunca `prisma migrate`.
+
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Organization {
+  id        String   @id
+  name      String
+  slug      String
+  logo      String?
+  createdAt DateTime
+  metadata  String?
+  cnpj      String
+  status    String?  @default("ACTIVE")
+
+  agents           Agent[]
+  whatsappChannels WhatsappChannel[]
+  targets          Target[]
+  campaigns        Campaign[]
+
+  @@unique([slug])
+  @@map("organization")
+}
+
+model Agent {
+  id             String       @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  name           String
+  isActive       Boolean      @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  whatsappChannels WhatsappChannel[]
+
+  @@index([organizationId])
+}
+
+model WhatsappChannel {
+  id             String       @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  agentId        String
+  agent          Agent        @relation(fields: [agentId], references: [id], onDelete: Cascade)
+
+  phoneNumberId String @unique
+  displayNumber String
+  wabaId        String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  targets   Target[]
+  campaigns Campaign[]
+
+  @@index([organizationId])
+  @@index([agentId])
+  @@index([wabaId])
+}
+
+enum TargetStatus {
+  AI
+  HUMAN
+  FINISHED
+}
+
+model Target {
+  id                String          @id @default(cuid())
+  organizationId    String
+  organization      Organization    @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  whatsappChannelId String
+  whatsappChannel   WhatsappChannel @relation(fields: [whatsappChannelId], references: [id], onDelete: Cascade)
+
+  waId     String
+  name     String?
+  email    String?
+  metadata Json?
+
+  status             TargetStatus @default(AI)
+  firstInteractionAt DateTime     @default(now())
+  lastInteractionAt  DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  messagingSessions MessagingSession[]
+  campaignTargets   CampaignTarget[]
+
+  @@unique([organizationId, whatsappChannelId, waId])
+  @@index([organizationId])
+  @@index([whatsappChannelId])
+}
+
+enum SessionOrigin {
+  CUSTOMER_MESSAGE
+  CAMPAIGN_TEMPLATE
+}
+
+model MessagingSession {
+  id                String   @id @default(cuid())
+  targetId          String
+  target            Target   @relation(fields: [targetId], references: [id], onDelete: Cascade)
+  whatsappChannelId String
+
+  createdVia             SessionOrigin @default(CUSTOMER_MESSAGE)
+  startedAt              DateTime      @default(now())
+  lastCustomerMessageAt  DateTime      @default(now())
+  lastAttendantMessageAt DateTime?
+
+  createdAt DateTime @default(now())
+
+  @@index([targetId])
+  @@index([whatsappChannelId])
+}
+
+enum CampaignStatus {
+  PROCESSING
+  COMPLETED
+}
+
+enum CampaignTargetStatus {
+  SENT
+  DELIVERED
+  READ
+  FAILED
+}
+
+enum CampaignDispatchType {
+  CSV
+  MANUAL
+}
+
+model Campaign {
+  id                String       @id @default(cuid())
+  organizationId    String
+  organization      Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  whatsappChannelId String
+  whatsappChannel   WhatsappChannel @relation(fields: [whatsappChannelId], references: [id], onDelete: Cascade)
+
+  name         String
+  category     String?
+  templateName String
+  language     String
+
+  status       CampaignStatus       @default(PROCESSING)
+  dispatchType CampaignDispatchType @default(CSV)
+
+  expectedContacts Int @default(0)
+  totalContacts    Int @default(0)
+  totalSent        Int @default(0)
+  totalFailures    Int @default(0)
+
+  createdByUserId String?
+  createdByName   String?
+  createdByEmail  String?
+
+  sentAt    DateTime @default(now())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  targets CampaignTarget[]
+
+  @@index([organizationId])
+  @@index([whatsappChannelId])
+}
+
+model CampaignTarget {
+  id         String               @id @default(cuid())
+  campaignId String
+  campaign   Campaign             @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  targetId   String
+  target     Target               @relation(fields: [targetId], references: [id], onDelete: Cascade)
+  status     CampaignTargetStatus @default(SENT)
+
+  response  String?
+  messageId String?
+  variables Json?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([campaignId])
+  @@index([messageId])
+}
