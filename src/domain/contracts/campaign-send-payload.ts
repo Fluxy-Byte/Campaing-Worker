@@ -19,6 +19,10 @@ export interface CampaignSendPayload {
   organizationId: string;
   whatsappChannelId: string;
   phoneNumberId: string;
+  wabaId: string;
+  serviceIslandId: string;
+  agentId: string;
+  agentName: string;
   templateName: string;
   language: string;
   category: string;
@@ -28,4 +32,11 @@ export interface CampaignSendPayload {
   templateHeaderText?: string;
   templateBodyText?: string;
   contacts: CampaignContactInput[];
+  // Se preenchido, cada contato enviado com sucesso vira um Ticket nesta fila
+  // (publica desk.ticket.create, mesmo mecanismo do handoff de IA) e o Target
+  // correspondente vira HUMAN em vez de continuar na IA.
+  routeToQueueId?: string;
+  // Só faz sentido junto de routeToQueueId — atendente assume o ticket direto
+  // (IN_PROGRESS) em vez de cair WAITING na fila.
+  routeToUserId?: string;
 }

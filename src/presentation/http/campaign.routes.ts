@@ -20,12 +20,18 @@ const campaignSendSchema = z.object({
   organizationId: z.string().min(1),
   whatsappChannelId: z.string().min(1),
   phoneNumberId: z.string().min(1),
+  wabaId: z.string().min(1),
+  serviceIslandId: z.string().min(1),
+  agentId: z.string().min(1),
+  agentName: z.string().min(1),
   templateName: z.string().min(1),
   language: z.string().min(1),
   category: z.string().min(1),
   templateHeaderText: z.string().optional(),
   templateBodyText: z.string().optional(),
   contacts: z.array(contactSchema).min(1),
+  routeToQueueId: z.string().min(1).optional(),
+  routeToUserId: z.string().min(1).optional(),
 });
 
 export function buildCampaignRouter(channel: AmqpChannel): Router {

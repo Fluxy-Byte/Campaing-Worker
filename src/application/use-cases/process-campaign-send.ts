@@ -3,6 +3,8 @@ import type { CampaignContactInput, CampaignSendPayload } from "../../domain/con
 import { getMongoDb } from "../../infrastructure/database/mongo/client";
 import { prisma } from "../../infrastructure/database/prisma/client";
 import { MetaGraphApiError, sendTemplateMessage, type TemplateComponent } from "../../infrastructure/meta/graph-api-client";
+import { getRabbitChannel } from "../../infrastructure/queue/rabbitmq/connection";
+import { publishDeskTicketCreate } from "../../infrastructure/queue/rabbitmq/publisher";
 import { resolveCampaignMessagingSession } from "./resolve-campaign-messaging-session";
 import { resolveCampaignTarget } from "./resolve-campaign-target";
 
@@ -118,6 +120,23 @@ async function processContact(payload: CampaignSendPayload, contact: CampaignCon
       createdAt: new Date(),
     };
     await db.collection<MessageDocument>(MESSAGES_COLLECTION).insertOne(document);
+
+    if (payload.routeToQueueId) {
+      const channel = await getRabbitChannel();
+      await publishDeskTicketCreate(channel, {
+        target: { id: target.id, waId: target.waId, name: target.name, metadata: target.metadata },
+        whatsappChannel: {
+          id: payload.whatsappChannelId,
+          phoneNumberId: payload.phoneNumberId,
+          wabaId: payload.wabaId,
+          serviceIslandId: payload.serviceIslandId,
+        },
+        messagingSession: { id: messagingSession.id, startedAt: messagingSession.startedAt },
+        agent: { id: payload.agentId, name: payload.agentName },
+        queueId: payload.routeToQueueId,
+        assignedUserId: payload.routeToUserId,
+      });
+    }
   }
 }
 
