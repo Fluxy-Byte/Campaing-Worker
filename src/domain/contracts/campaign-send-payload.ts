@@ -2,6 +2,9 @@ export interface CampaignContactInput {
   phone: string;
   email?: string;
   name?: string;
+  // Qualquer campo do contato que não seja telefone/nome/email — mergeado em
+  // Target.metadata (nunca apaga o que já existia, ver resolveCampaignTarget).
+  metadata?: Record<string, string>;
   // Opcionais: templates sem variável no header/body (comum em UTILITY/AUTHENTICATION
   // simples) não devem mandar esse componente pra Meta — ver montagem em quem consome.
   parametersHeader?: { type: string; text: string }[];
@@ -39,4 +42,7 @@ export interface CampaignSendPayload {
   // Só faz sentido junto de routeToQueueId — atendente assume o ticket direto
   // (IN_PROGRESS) em vez de cair WAITING na fila.
   routeToUserId?: string;
+  // Usado pelo disparo ativo do Desk — suprime a transferMessage genérica do
+  // agente (o contato já recebeu o template disparado pelo próprio atendente).
+  skipTransferMessage?: boolean;
 }

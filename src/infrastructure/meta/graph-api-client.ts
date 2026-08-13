@@ -41,6 +41,7 @@ export async function sendTemplateMessage(
   language: string,
   toWaId: string,
   components: TemplateComponent[],
+  accessToken: string,
 ): Promise<SendTemplateResult> {
   const endpoint = category === "MARKETING" ? "marketing_messages" : "messages";
   const url = `${GRAPH_API_BASE}/${phoneNumberId}/${endpoint}`;
@@ -59,7 +60,7 @@ export async function sendTemplateMessage(
   const response = await fetch(url, {
     method: "POST",
     headers: {
-      Authorization: `Bearer ${env.META_ACCESS_TOKEN}`,
+      Authorization: `Bearer ${accessToken}`,
       "Content-Type": "application/json",
     },
     body: JSON.stringify(body),

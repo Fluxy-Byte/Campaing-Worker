@@ -20,6 +20,7 @@ model Organization {
   metadata  String?
   cnpj      String
   status    String?  @default("ACTIVE")
+  tokenAcessApi String? @unique
 
   agents           Agent[]
   whatsappChannels WhatsappChannel[]
@@ -55,6 +56,7 @@ model WhatsappChannel {
   phoneNumberId String @unique
   displayNumber String
   wabaId        String
+  metaAccessToken String?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

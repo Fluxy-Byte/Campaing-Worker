@@ -11,6 +11,8 @@ interface DeskTicketCreatePayload {
   /// Se preenchido, o Desk-Worker cria o ticket já IN_PROGRESS + atribuído a
   /// este atendente, em vez de WAITING na fila (ver find-or-create-open-ticket.ts).
   assignedUserId?: string;
+  /// Repassado direto pro Desk-Worker — ver find-or-create-open-ticket.ts.
+  skipTransferMessage?: boolean;
 }
 
 /// Publica na mesma fila que o AI-Worker já usa pra handoff de atendimento

@@ -30,16 +30,22 @@ export async function resolveCampaignTarget(input: {
         waId,
         name: input.contact.name,
         email: input.contact.email,
+        metadata: input.contact.metadata ?? undefined,
       },
     });
   }
 
-  if (input.contact.name || input.contact.email) {
+  if (input.contact.name || input.contact.email || input.contact.metadata) {
+    const mergedMetadata = input.contact.metadata
+      ? { ...((existing.metadata as object) ?? {}), ...input.contact.metadata }
+      : existing.metadata;
+
     return prisma.target.update({
       where: { id: existing.id },
       data: {
         name: input.contact.name ?? existing.name,
         email: input.contact.email ?? existing.email,
+        metadata: mergedMetadata as object,
       },
     });
   }

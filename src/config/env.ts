@@ -14,7 +14,6 @@ const envSchema = z.object({
   MONGO_URL: z.string().min(1),
   MONGO_DB_NAME: z.string().min(1),
 
-  META_ACCESS_TOKEN: z.string().min(1),
   META_GRAPH_API_VERSION: z.string().default("v21.0"),
 });
 

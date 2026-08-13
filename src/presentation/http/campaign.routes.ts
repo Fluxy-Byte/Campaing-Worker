@@ -9,6 +9,7 @@ const contactSchema = z.object({
   phone: z.string().min(8),
   email: z.string().optional(),
   name: z.string().optional(),
+  metadata: z.record(z.string(), z.string()).optional(),
   parametersHeader: z.array(z.object({ type: z.string(), text: z.string() })).optional(),
   parametersBody: z.array(z.object({ type: z.string(), text: z.string() })).optional(),
   parametersButton: z.array(z.object({ type: z.string(), text: z.string() })).optional(),
@@ -32,6 +33,7 @@ const campaignSendSchema = z.object({
   contacts: z.array(contactSchema).min(1),
   routeToQueueId: z.string().min(1).optional(),
   routeToUserId: z.string().min(1).optional(),
+  skipTransferMessage: z.boolean().optional(),
 });
 
 export function buildCampaignRouter(channel: AmqpChannel): Router {

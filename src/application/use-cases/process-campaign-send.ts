@@ -41,7 +41,7 @@ function buildComponents(contact: CampaignContactInput): TemplateComponent[] {
   return components;
 }
 
-async function processContact(payload: CampaignSendPayload, contact: CampaignContactInput): Promise<void> {
+async function processContact(payload: CampaignSendPayload, contact: CampaignContactInput, accessToken: string): Promise<void> {
   const components = buildComponents(contact);
 
   let externalMessageId: string | undefined;
@@ -56,6 +56,7 @@ async function processContact(payload: CampaignSendPayload, contact: CampaignCon
       payload.language,
       contact.phone,
       components,
+      accessToken,
     );
     externalMessageId = result.externalMessageId;
     rawResponse = result.rawResponse;
@@ -135,6 +136,7 @@ async function processContact(payload: CampaignSendPayload, contact: CampaignCon
         agent: { id: payload.agentId, name: payload.agentName },
         queueId: payload.routeToQueueId,
         assignedUserId: payload.routeToUserId,
+        skipTransferMessage: payload.skipTransferMessage,
       });
     }
   }
@@ -145,8 +147,17 @@ async function processContact(payload: CampaignSendPayload, contact: CampaignCon
 /// mesmo desenho do worker antigo). Contatos são processados em sequência
 /// (não em paralelo) para não estourar rate limit da Graph API.
 export async function processCampaignSend(payload: CampaignSendPayload): Promise<void> {
+  const whatsappChannel = await prisma.whatsappChannel.findUniqueOrThrow({
+    where: { id: payload.whatsappChannelId },
+    select: { metaAccessToken: true },
+  });
+  if (!whatsappChannel.metaAccessToken) {
+    throw new Error(`WhatsApp Channel ${payload.whatsappChannelId} não tem token de acesso da Meta cadastrado.`);
+  }
+  const accessToken = whatsappChannel.metaAccessToken;
+
   for (const contact of payload.contacts) {
-    await processContact(payload, contact);
+    await processContact(payload, contact, accessToken);
   }
 
   await prisma.campaign.update({
