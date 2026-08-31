@@ -12,15 +12,15 @@ datasource db {
 }
 
 model Organization {
-  id        String   @id
-  name      String
-  slug      String
-  logo      String?
-  createdAt DateTime
-  metadata  String?
-  cnpj      String
-  status    String?  @default("ACTIVE")
-  tokenAcessApi String? @unique
+  id            String   @id
+  name          String
+  slug          String
+  logo          String?
+  createdAt     DateTime
+  metadata      String?
+  cnpj          String
+  status        String?  @default("ACTIVE")
+  tokenAcessApi String?  @unique
 
   agents           Agent[]
   whatsappChannels WhatsappChannel[]
@@ -42,6 +42,7 @@ model Agent {
   updatedAt DateTime @updatedAt
 
   whatsappChannels WhatsappChannel[]
+  campaigns        Campaign[]
 
   @@index([organizationId])
 }
@@ -53,9 +54,9 @@ model WhatsappChannel {
   agentId        String
   agent          Agent        @relation(fields: [agentId], references: [id], onDelete: Cascade)
 
-  phoneNumberId String @unique
-  displayNumber String
-  wabaId        String
+  phoneNumberId   String  @unique
+  displayNumber   String
+  wabaId          String
   metaAccessToken String?
 
   createdAt DateTime @default(now())
@@ -108,9 +109,9 @@ enum SessionOrigin {
 }
 
 model MessagingSession {
-  id                String   @id @default(cuid())
+  id                String @id @default(cuid())
   targetId          String
-  target            Target   @relation(fields: [targetId], references: [id], onDelete: Cascade)
+  target            Target @relation(fields: [targetId], references: [id], onDelete: Cascade)
   whatsappChannelId String
 
   createdVia             SessionOrigin @default(CUSTOMER_MESSAGE)
@@ -142,11 +143,13 @@ enum CampaignDispatchType {
 }
 
 model Campaign {
-  id                String       @id @default(cuid())
+  id                String          @id @default(cuid())
   organizationId    String
-  organization      Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organization      Organization    @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   whatsappChannelId String
   whatsappChannel   WhatsappChannel @relation(fields: [whatsappChannelId], references: [id], onDelete: Cascade)
+  agentId           String
+  agent             Agent           @relation(fields: [agentId], references: [id], onDelete: Cascade)
 
   name         String
   category     String?
@@ -173,6 +176,7 @@ model Campaign {
 
   @@index([organizationId])
   @@index([whatsappChannelId])
+  @@index([agentId])
 }
 
 model CampaignTarget {
