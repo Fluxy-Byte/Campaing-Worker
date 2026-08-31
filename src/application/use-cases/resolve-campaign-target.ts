@@ -1,5 +1,6 @@
 import { prisma } from "../../infrastructure/database/prisma/client";
 import type { CampaignContactInput } from "../../domain/contracts/campaign-send-payload";
+import { normalizeBrazilianWaId } from "../../domain/utils/phone";
 
 /// Encontra o Target pelo telefone (waId) dentro do canal/organização da campanha,
 /// ou cria um novo — contato de campanha pode nunca ter trocado mensagem via
@@ -10,7 +11,7 @@ export async function resolveCampaignTarget(input: {
   whatsappChannelId: string;
   contact: CampaignContactInput;
 }) {
-  const waId = input.contact.phone;
+  const waId = normalizeBrazilianWaId(input.contact.phone);
 
   const existing = await prisma.target.findUnique({
     where: {
