@@ -5,6 +5,7 @@ import { prisma } from "../../infrastructure/database/prisma/client";
 import { MetaGraphApiError, sendTemplateMessage, type TemplateComponent } from "../../infrastructure/meta/graph-api-client";
 import { getRabbitChannel } from "../../infrastructure/queue/rabbitmq/connection";
 import { publishDeskTicketCreate } from "../../infrastructure/queue/rabbitmq/publisher";
+import { recordMessageLog } from "./message-log-service";
 import { resolveCampaignMessagingSession } from "./resolve-campaign-messaging-session";
 import { resolveCampaignTarget } from "./resolve-campaign-target";
 
@@ -65,6 +66,13 @@ async function processContact(payload: CampaignSendPayload, contact: CampaignCon
     rawResponse = error instanceof MetaGraphApiError ? error.body : String(error);
     console.error(`[CAMPAIGN-WORKER] falha ao enviar template para ${contact.phone}:`, error);
   }
+
+  // externalMessageId (wamid) só existe depois do envio acima — como o
+  // Outbound-Worker, esta mensagem não tem id nenhum antes disso, então
+  // "start" é o mais cedo possível aqui. Contato com falha de envio nunca
+  // ganha um id (a falha já fica registrada via CampaignTarget.status), então
+  // não há nada a rastrear no MessageLog pra ele.
+  if (externalMessageId) await recordMessageLog(externalMessageId, "start");
 
   const target = await resolveCampaignTarget({
     organizationId: payload.organizationId,
@@ -140,6 +148,8 @@ async function processContact(payload: CampaignSendPayload, contact: CampaignCon
       });
     }
   }
+
+  if (externalMessageId) await recordMessageLog(externalMessageId, "end");
 }
 
 /// Processa o lote inteiro de uma campanha — chamado 1x por mensagem consumida

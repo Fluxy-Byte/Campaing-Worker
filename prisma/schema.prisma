@@ -77,11 +77,11 @@ enum TargetStatus {
 }
 
 model Target {
-  id                String          @id @default(cuid())
+  id                String       @id @default(cuid())
   organizationId    String
-  organization      Organization    @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organization      Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   whatsappChannelId String
-  whatsappChannel   Channel @relation(fields: [whatsappChannelId], references: [id], onDelete: Cascade)
+  whatsappChannel   Channel      @relation(fields: [whatsappChannelId], references: [id], onDelete: Cascade)
 
   /// Business-Scoped User ID (contacts[].user_id) — vínculo principal do
   /// contato, sempre presente desde abr/2026.
@@ -154,13 +154,13 @@ enum CampaignDispatchType {
 }
 
 model Campaign {
-  id                String          @id @default(cuid())
+  id                String       @id @default(cuid())
   organizationId    String
-  organization      Organization    @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organization      Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   whatsappChannelId String
-  whatsappChannel   Channel @relation(fields: [whatsappChannelId], references: [id], onDelete: Cascade)
+  whatsappChannel   Channel      @relation(fields: [whatsappChannelId], references: [id], onDelete: Cascade)
   agentId           String
-  agent             Agent           @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  agent             Agent        @relation(fields: [agentId], references: [id], onDelete: Cascade)
 
   name         String
   category     String?
@@ -202,9 +202,29 @@ model CampaignTarget {
   messageId String?
   variables Json?
 
+  /// Preenchido pelo Inbound-Service quando o contato responde ao disparo —
+  /// ver Agent-Api/prisma/schema.prisma (schema canônico) pro comentário completo.
+  respondedCampaign Boolean @default(false)
+  campaignResponse  String?
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@index([campaignId])
   @@index([messageId])
+}
+
+/// Rastreamento de uma mensagem passando pelos serviços da mensageria — ver
+/// Agent-Api/prisma/schema.prisma (schema canônico) pro comentário completo
+/// e MENSAGERIA.md pro mapa das filas. Sem FK: messageId é um ponteiro solto
+/// (Mongo _id da mensagem, ou o id disponível naquele estágio).
+model MessageLog {
+  id         String   @id @default(cuid())
+  messageId  String
+  createdAt  DateTime @default(now())
+  messageLog String
+  stagio     String
+
+  @@index([messageId])
+  @@index([messageLog, stagio])
 }
