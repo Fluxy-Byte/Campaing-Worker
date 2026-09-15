@@ -23,7 +23,7 @@ model Organization {
   tokenAcessApi String?  @unique
 
   agents           Agent[]
-  whatsappChannels WhatsappChannel[]
+  whatsappChannels Channel[]
   targets          Target[]
   campaigns        Campaign[]
 
@@ -41,13 +41,13 @@ model Agent {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  whatsappChannels WhatsappChannel[]
+  whatsappChannels Channel[]
   campaigns        Campaign[]
 
   @@index([organizationId])
 }
 
-model WhatsappChannel {
+model Channel {
   id             String       @id @default(cuid())
   organizationId String
   organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
@@ -81,7 +81,7 @@ model Target {
   organizationId    String
   organization      Organization    @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   whatsappChannelId String
-  whatsappChannel   WhatsappChannel @relation(fields: [whatsappChannelId], references: [id], onDelete: Cascade)
+  whatsappChannel   Channel @relation(fields: [whatsappChannelId], references: [id], onDelete: Cascade)
 
   /// Business-Scoped User ID (contacts[].user_id) — vínculo principal do
   /// contato, sempre presente desde abr/2026.
@@ -158,7 +158,7 @@ model Campaign {
   organizationId    String
   organization      Organization    @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   whatsappChannelId String
-  whatsappChannel   WhatsappChannel @relation(fields: [whatsappChannelId], references: [id], onDelete: Cascade)
+  whatsappChannel   Channel @relation(fields: [whatsappChannelId], references: [id], onDelete: Cascade)
   agentId           String
   agent             Agent           @relation(fields: [agentId], references: [id], onDelete: Cascade)
 

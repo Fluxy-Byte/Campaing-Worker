@@ -126,7 +126,7 @@ async function processContact(payload: CampaignSendPayload, contact: CampaignCon
       const channel = await getRabbitChannel();
       await publishDeskTicketCreate(channel, {
         target: { id: target.id, waId: target.waId, name: target.name, metadata: target.metadata },
-        whatsappChannel: {
+        channel: {
           id: payload.whatsappChannelId,
           phoneNumberId: payload.phoneNumberId,
           wabaId: payload.wabaId,
@@ -147,7 +147,7 @@ async function processContact(payload: CampaignSendPayload, contact: CampaignCon
 /// mesmo desenho do worker antigo). Contatos são processados em sequência
 /// (não em paralelo) para não estourar rate limit da Graph API.
 export async function processCampaignSend(payload: CampaignSendPayload): Promise<void> {
-  const whatsappChannel = await prisma.whatsappChannel.findUniqueOrThrow({
+  const whatsappChannel = await prisma.channel.findUniqueOrThrow({
     where: { id: payload.whatsappChannelId },
     select: { metaAccessToken: true },
   });

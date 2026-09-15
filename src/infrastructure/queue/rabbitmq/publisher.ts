@@ -4,7 +4,7 @@ import { QUEUE_DESK_TICKET_CREATE } from "./queues";
 
 interface DeskTicketCreatePayload {
   target: { id: string; waId: string | null; name: string | null; metadata: unknown };
-  whatsappChannel: { id: string; phoneNumberId: string; wabaId: string; serviceIslandId: string };
+  channel: { id: string; phoneNumberId: string; wabaId: string; serviceIslandId: string };
   messagingSession: { id: string; startedAt: Date | string };
   agent: { id: string; name: string };
   queueId: string;
